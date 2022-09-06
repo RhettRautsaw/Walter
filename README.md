@@ -19,7 +19,7 @@ To use these tools, the HiFi reads should already contain 5mC base modification 
 
 ## Environment 
 
-There are several Python packages required to run the `aligned_bam_to_cpg_scores.py` script. These can easily be installed using `conda` and the `conda_env_cpg.yaml` file provided:
+There are several Python packages required to run the `Walter.py` script. These can easily be installed using `conda` and the `conda_env_cpg.yaml` file provided:
 
 ```bash
 # create conda environment
