@@ -4,7 +4,7 @@
 
 Today, we cook some **Hi**gh **Fi**delity **Meth**-ylation scores. This is a collection of tools for the analysis of CpG/5mC data from PacBio HiFi reads aligned to a reference genome (e.g., an aligned BAM).
 
-This is a modified version of PacBio's [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools); whereby, I broke apart (and renamed) their `aligned_bam_to_cpg_scores.py` script to make use of `GNU-Parallel` rather than `concurrent.futures` within Python. I also renamed the scripts because it was just too long and not catchy enough for me I guess.
+This is a modified version of PacBio's [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools); whereby, I broke apart their `aligned_bam_to_cpg_scores.py` script to make use of `GNU-Parallel` rather than `concurrent.futures` within Python. I also took the opportunity to rename the scripts to be Breaking Bad themed, because why not...
 
 ## The Scripts
 
@@ -23,10 +23,13 @@ There are several Python packages required to run the `Walter.py` script. These 
 
 ```bash
 # create conda environment
-$ conda env create -f conda_env_cpg.yaml
+conda env create -f conda_env_cpg.yaml
 
 # activate environment
-$ conda activate cpg
+conda activate cpg
+
+# Install GNU-Parallel
+conda install parallel
 ```
 
 These packages could also be installed manually. However, the specific package versions listed in the yaml file *must* be used to ensure a stable environment.
@@ -153,20 +156,22 @@ An aligned BAM file containing HiFi reads with 5mC tags (`HG002.GRCh38.haplotagg
 
 The sample is HG002/NA24385 from the Human Pangenome Reference Consortium HG002 Data Freeze v1.0, and is aligned to GRCh38. There are also four unaligned bam files containing the HiFi reads. 
 
-# Performance
+<img align="right" width=200 src="BreakingBad_YeahScience.gif">
 
-<img align="right" width=250 src="BreakingBad_YeahScience.gif">
+## Performance
+
+Walter & Heisenberg are also much faster than the original [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools) `aligned_bam_to_cpg_scores.py` script. Shown below is a table with the original and updated runtimes.
 
 The current `-s, --chunksize` default of 500,000 requires 1-3 Gb memory per thread with a 30X coverage aligned BAM. A higher coverage dataset would use more memory per thread. 
 
 Benchmarks were run using the `HG002.GRCh38.haplotagged.bam` dataset described in the above section. Peak memory was estimated using 3Gb per thread. 
 
-| Threads (`-t`) | Chunk Size (`-s`) | Wall Time (`h:m:s`) | Estimated Peak Memory  |
-| -------------- | ----------------- |-------------------| ---------------------- |
-|        48      |  500000 (default) | 3:15:56           |          144 Gb        |
-|        36      |  500000 (default) | 3:58:06           |          108 Gb        |
-|        24      |  500000 (default) | 5:19:03           |           72 Gb        |
-|        12      |  500000 (default) | 8:58:01           |           36 Gb        |
+| Threads (`-t`) | Chunk Size (`-s`) | [Original Wall Time](https://github.com/PacificBiosciences/pb-CpG-tools) (`h:m:s`) | Walter Wall Time (`h:m:s`) | Estimated Peak Memory  |
+|---:|------------------:|--------:|--------:|-------:|
+| 48 |  500000 (default) | 3:15:56 | 2:23:00 | 144 Gb |
+| 36 |  500000 (default) | 3:58:06 | 2:40:00 | 108 Gb |
+| 24 |  500000 (default) | 5:19:03 | 3:24:03 |  72 Gb |
+| 12 |  500000 (default) | 8:58:01 | 6:34:54 |  36 Gb |
 
 
 # Changelog
