@@ -166,7 +166,7 @@ The current `-s, --chunksize` default of 500,000 requires 1-3 Gb memory per thre
 
 Benchmarks were run using the `HG002.GRCh38.haplotagged.bam` dataset described in the above section. Peak memory was estimated using 3Gb per thread. 
 
-| Threads (`-t`) | Chunk Size (`-s`) | [Original Wall Time](https://github.com/PacificBiosciences/pb-CpG-tools) (`h:m:s`) | Walter Wall Time (`h:m:s`) | Estimated Peak Memory  |
+| Threads <br> (`-t`) | Chunk Size <br> (`-s`) | [Original Wall Time](https://github.com/PacificBiosciences/pb-CpG-tools) (`h:m:s`) | Walter Wall Time (`h:m:s`) | Estimated Peak Memory  |
 |---:|------------------:|--------:|--------:|-------:|
 | 48 |  500000 (default) | 3:15:56 | 2:23:00 | 144 Gb |
 | 36 |  500000 (default) | 3:58:06 | 2:40:00 | 108 Gb |
