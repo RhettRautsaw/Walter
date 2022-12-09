@@ -232,9 +232,20 @@ def parse_mmtag(query_seq, mmtag, modcode, base, reverse):
 		tags are written as: C+m,5,12,0;C+h,5,12,0;
 		if multiple mod types present in tag, must find relevant one first
 		"""
-		for x in mmtag.split(';'):
-			if not x.startswith(modcode): continue
-			return x[len(modcode) + 1:]
+		for mmsection in mmtag.split(';'):
+			if not mmsection.startswith(modcode):
+				continue
+			start_index = len(modcode)
+
+			# Note that this method treats either value of the skip-base mode in the same way to
+			# stay back-compatible with older bams where this wasn't specified.
+			if len(mmsection) > start_index and mmsection[start_index] in "?.":
+				start_index += 1
+			if len(mmsection) > start_index:
+				if mmsection[start_index] != ',':
+					raise Exception(f"Can't parse MM tag segment '{mmsection}' due to unexpected value in position {start_index+1}")
+				start_index += 1
+			return mmsection[start_index:]
 		return None
 	
 	modline = get_modline()
@@ -424,7 +435,7 @@ def process_read(ref, pos_start, pos_stop, hap_tag, is_denovo_modsites, pileup_d
 			score = mod_dict.get(location, 0)
 			
 			# Add tuple with strand, modification score, and haplotype to the list for this position
-			pileup_data.basemod_data[ref_offset].append((strand, score, hap))
+			pileup_data.basemod_data[ref_offset].append((strand, score, hap, read.query_name))
 
 
 def pileup_from_reads(bamIn, ref, pos_start, pos_stop, min_mapq, hap_tag, modsites):
@@ -782,6 +793,28 @@ def collect_bed_results_model(ref, pos_start, pos_stop, filtered_basemod_data, m
 	
 	return bed_results
 
+def collect_read_results(ref, pos_start, pos_stop, filtered_basemod_data):
+	"""
+	Iterates over filtered_basemod_data and returns list of modification probabilities per site per read
+	Output:
+		[(0) ref name, (1) start coord, (2) stop coord, (3) strand, (4) haplotype, (5) mod probability, (6) read name]
+	
+	:param ref: Reference name. (str)
+	:param pos_start: Start coordinate for region. (int)
+	:param pos_stop: Stop coordinate for region. (int)
+	:param filtered_basemod_data: List of 2-tuples for each position remaining after filtration. Each 2-tuple is the
+	reference position and base mod dat. The list is sorted by reference position (list)
+	:param model_dir: Full path to directory containing model. (str)
+	:return bed_results: List of sublists with information to write the output bed file. (list)
+	"""
+	logging.debug("coordinates {}: {:,}-{:,}: (4) collect_read_results".format(ref, pos_start, pos_stop))
+	
+	read_results=[]
+	for (refPosition, modinfoList) in filtered_basemod_data:
+		for read in modinfoList:
+			read_results.append((ref, refPosition, refPosition+1, read[0], read[2], read[1], read[3]))
+	
+	return read_results
 
 def run_process_region(arguments):
 	"""
@@ -812,6 +845,8 @@ def run_process_region(arguments):
 	# bam object no longer needed, close file
 	bamIn.close()
 	
+	read_results = collect_read_results(ref, pos_start, pos_stop, filtered_basemod_data)
+	
 	if filtered_basemod_data:
 		# summarize the mod results, depends on pileup_mode option selected
 		if pileup_mode == "count":
@@ -824,7 +859,7 @@ def run_process_region(arguments):
 	logging.debug("coordinates {}: {:,}-{:,}: (5) run_process_region: finish".format(ref, pos_start, pos_stop))
 	
 	if len(bed_results) > 1:
-		return bed_results
+		return bed_results, read_results
 	else:
 		return
 
@@ -852,22 +887,29 @@ def run_all_pileup_processing(region_to_process):
 	logging.info("run_all_pileup_processing: Starting {}.{}-{} processing.\n".format(region_to_process[5], region_to_process[6], region_to_process[7]))
 	
 	bed_results = []
-	bed_result = run_process_region_wrapper(region_to_process)
+	read_results = []
+	bed_result,read_result = run_process_region_wrapper(region_to_process)
 	bed_results.append(bed_result)
+	read_results.append(read_result)
 	
 	logging.info("run_all_pileup_processing: Finished processing.\n")
 	# results is a list of sublists, may contain None, remove these
 	filtered_bed_results = [i for i in bed_results if i]
+	filtered_read_results = [i for i in read_results if i]
 	# turn list of lists of sublists into list of sublists
 	flattened_bed_results = [i for sublist in filtered_bed_results for i in sublist]
+	flattened_read_results = [i for sublist in filtered_read_results for i in sublist]
 	
 	# ensure bed results are sorted by ref contig name, start position
 	logging.info("run_all_pileup_processing: Starting sort for bed results.\n")
 	if flattened_bed_results:
 		flattened_bed_results.sort(key=itemgetter(0, 1))
 		logging.info("run_all_pileup_processing: Finished sort for bed results.\n")
+	if flattened_read_results:
+		flattened_read_results.sort(key=itemgetter(0, 1))
+		logging.info("run_all_pileup_processing: Finished sort for read results.\n")
 	
-	return flattened_bed_results
+	return flattened_bed_results, flattened_read_results
 
 
 def main():
@@ -876,10 +918,24 @@ def main():
 	validate_args(args)
 	log_args(args)
 	region_to_process = [args.bam, args.fasta, args.modsites, args.pileup_mode, args.model_dir, args.region, args.start, args.end, args.min_mapq, args.hap_tag]
-	bed_results = run_all_pileup_processing(region_to_process)
+	bed_results, read_results = run_all_pileup_processing(region_to_process)
 	with open("Heisenberg_tmp/{}.{}-{}.bed".format(args.region, args.start, args.end), "w", newline="") as f:
 		writer = csv.writer(f, delimiter="\t")
 		writer.writerows(bed_results)
+	with open("Heisenberg_tmp/{}.{}-{}.reads".format(args.region, args.start, args.end), "w", newline="") as f:
+		writer = csv.writer(f, delimiter="\t")
+		writer.writerows(read_results)
+	
+	# Create file for NanoMethViz input?
+	#df = pd.read_csv("Heisenberg_tmp/{}.{}-{}.reads".format(args.region, args.start, args.end), sep='\t', header=None, names=['chr', 'pos', 'stop', 'strand', 'haplotype', 'mod_prob', 'read_name'])
+	#df['sample']= args.output_label
+	# x = statistic; P = e1071::sigmoid(x); x = log(-(P/(P-1)))
+	#df.loc[df['mod_prob'].eq(0), 'mod_prob'] = 0.00001
+	#df.loc[df['mod_prob'].eq(1), 'mod_prob'] = 0.99999
+	#df['statistic'] = np.log(-(df['mod_prob']/(df['mod_prob']-1)))
+	#df = df[["sample", "chr", "pos", "strand", "statistic", "read_name"]]
+	#df.to_csv("Heisenberg_tmp/{}.{}-{}.NMV.tsv".format(args.region, args.start, args.end), sep="\t", index=False, header=False)
+	
 
 
 if __name__ == '__main__':

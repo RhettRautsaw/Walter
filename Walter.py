@@ -269,7 +269,6 @@ def write_output_bed(label, modsites, min_coverage, bed_results):
 	
 	return output_files
 
-
 def make_bed_df(bed, pileup_mode):
 	"""
 	Construct a pandas dataframe from a bed file.
@@ -406,17 +405,25 @@ def main():
 	sp.call("parallel --will-cite -j 1 -a " + args.output_label + ".Walter.regions -k --colsep '\t' --bar " + 
 		"\"" +
 		"cat Heisenberg_tmp/{6}.{7}-{8}.bed >> " + args.output_label + ".Heisenberg.bed; " + 
+		"cat Heisenberg_tmp/{6}.{7}-{8}.reads >> " + args.output_label + ".Heisenberg.reads; " +
+		#"cat Heisenberg_tmp/{6}.{7}-{8}.NMV.tsv >> " + args.output_label + ".Heisenberg.NMV.tsv; " + 
 		"cat Heisenberg_tmp/{6}.{7}-{8}.log >> " + args.output_label + ".Heisenberg.log\"", shell=True)
 	sp.call("rm -r Heisenberg_tmp", shell=True)
+	sp.call("gzip " + args.output_label + ".Heisenberg.reads", shell=True)
+	
+	print("Finished multiprocessing.\nWriting bed files.")
 	with open(args.output_label + ".Heisenberg.bed", newline='') as f:
 		reader = csv.reader(f, delimiter="\t")
 		bed_results = list(reader)
 	
-	print("Finished multiprocessing.\nWriting bed files.")
 	bed_files = write_output_bed(args.output_label, args.modsites, args.min_coverage, bed_results)
 	
 	print("Writing bigwig files.")
 	convert_bed_to_bigwig(bed_files, args.fasta, args.pileup_mode)
+	
+	#print("Preparing per-read results for NanoMethViz & Differential Methylation")
+	#sp.call("bgzip " + args.output_label + ".Heisenberg.NMV.tsv", shell=True)
+	#sp.call("tabix -s 2 -b 3 -e 3 " + args.output_label + ".NMV.tsv.gz", shell=True)
 	
 	print("Finished.\n")
 

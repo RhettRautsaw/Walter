@@ -94,7 +94,7 @@ Using the `-a, --hap_tag` flag allows an arbitrary SAM tag to be used to identif
 
 # Outputs
 
-There are bed format (`.bed`) and bigwig format (`.bw`) files generated for the complete read set and each separate haplotype (when available). 
+There are bed format (`.bed`) and bigwig format (`.bw`) files generated for the complete read set and each separate haplotype (when available). Per-read information is also generated as a tab-delimited file (note that these are the raw-calls from Primrose and have not been modeled)
 
 In addition, there are coverage filtered version of these files produced that are based on the minimum coverage value set for `-c, --min_coverage`. 
 
@@ -103,6 +103,7 @@ Two log files are also produced (`[label].Walter.log` & `[label].Heisenberg.log`
 If haplotype information is absent, the following 4 files are expected:
 
 ```
+[label].Heisenberg.reads.gz
 [label].Walter.total.[pileup_mode].bed
 [label].Walter.total.[pileup_mode].bw
 [label].Walter.total.[pileup_mode].mincov[X].bed
@@ -112,6 +113,7 @@ If haplotype information is absent, the following 4 files are expected:
 If haplotype information is present, the following 12 files are expected:
 
 ```
+[label].Heisenberg.reads.gz
 [label].Walter.total.[pileup_mode].bed
 [label].Walter.hap1.[pileup_mode].bed 
 [label].Walter.hap2.[pileup_mode].bed
@@ -154,7 +156,7 @@ The bigwig files are in an indexed binary format and contain columns 1-4 listed 
 
 An aligned BAM file containing HiFi reads with 5mC tags (`HG002.GRCh38.haplotagged.bam`) is freely available for download: https://downloads.pacbcloud.com/public/dataset/HG002-CpG-methylation-202202/
 
-The sample is HG002/NA24385 from the Human Pangenome Reference Consortium HG002 Data Freeze v1.0, and is aligned to GRCh38. There are also four unaligned bam files containing the HiFi reads. 
+The sample is HG002/NA24385 from the Human Pangenome Reference Consortium HG002 Data Freeze v1.0, and is aligned to GRCh38 (https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz). There are also four unaligned bam files containing the HiFi reads. 
 
 <img align="right" width=200 src="BreakingBad_YeahScience.gif">
 
