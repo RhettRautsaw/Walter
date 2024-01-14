@@ -1,4 +1,5 @@
-This page was designed to improve [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools) run times and issues with concurrent.futures. These issues have been addressed in [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools); therefore, this page is now archived and users should refer to [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools) for methylation analysis.
+# NOTICE
+🚨🚧 This page was created to improve [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools) run times and issues with concurrent.futures. These issues have been addressed in the latest versions of [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools); therefore, this page is now archived and users should refer to [pb-CpG-tools](https://github.com/PacificBiosciences/pb-CpG-tools) for methylation analysis. 🚧🚨
 
 # Walter
 
